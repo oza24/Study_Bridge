@@ -5,17 +5,19 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
-const region = process.env.AWS_REGION || "us-east-1";
+const region = process.env.REGION || "us-east-1";
 
 // AWS SDK Setup using credentials if provided
 const awsConfig = {
   region,
-  ...(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && {
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    }
-  })
+  ...(process.env.ACCESS_KEY_ID && process.env.SECRET_ACCESS_KEY
+    ? {
+        credentials: {
+          accessKeyId: process.env.ACCESS_KEY_ID!,
+          secretAccessKey: process.env.SECRET_ACCESS_KEY!
+        }
+      }
+    : {})
 };
 
 const pollyClient = new PollyClient(awsConfig);

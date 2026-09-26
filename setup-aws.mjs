@@ -9,10 +9,10 @@ const envVars = Object.fromEntries(envStr.split('\n').filter(l => l && !l.starts
   return [l.substring(0, i).trim(), l.substring(i + 1).trim()];
 }));
 
-const region = envVars.AWS_REGION || "us-east-1";
+const region = envVars.REGION || "us-east-1";
 const credentials = {
-  accessKeyId: envVars.AWS_ACCESS_KEY_ID,
-  secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
+  accessKeyId: envVars.ACCESS_KEY_ID,
+  secretAccessKey: envVars.SECRET_ACCESS_KEY,
 };
 
 const s3Client = new S3Client({ region, credentials });
