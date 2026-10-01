@@ -136,7 +136,15 @@ Return a JSON object with strictly this structure:
     });
 
   } catch (error: any) {
-    console.error("Processing API Error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Pipeline Error:", error);
+    // Return the actual error message to the UI for debugging
+    return NextResponse.json(
+      { 
+        error: error.message || "Failed to process", 
+        stack: error.stack || null,
+        name: error.name || "UnknownError"
+      }, 
+      { status: 500 }
+    );
   }
 }

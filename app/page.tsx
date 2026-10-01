@@ -33,10 +33,13 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, targetLang }),
       });
-      
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to process text");
-      
+      if (res.ok) {
+        setResult(data);
+      } else {
+        alert(`Server Error: ${data.error} (${data.name})`);
+      }
       setResult(data);
     } catch (err: any) {
       setError(err.message);
@@ -49,16 +52,16 @@ export default function Home() {
     <div className="min-h-screen bg-[#050505] text-zinc-100 font-sans selection:bg-indigo-500/30">
       {/* Background Decorators */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[120px]" />
-         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/10 blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-900/20 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/10 blur-[120px]" />
       </div>
 
       <main className="relative max-w-5xl mx-auto px-6 py-16 flex flex-col gap-12">
-        
+
         {/* Header */}
         <header className="flex flex-col items-center text-center gap-4 animate-fade-in-up">
           <div className="inline-flex items-center justify-center p-3 sm:p-4 rounded-3xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-xl mb-2">
-             <Brain className="w-8 h-8 text-indigo-400" />
+            <Brain className="w-8 h-8 text-indigo-400" />
           </div>
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-br from-white via-white/90 to-white/40 bg-clip-text text-transparent">
             StudyBridge
@@ -72,7 +75,7 @@ export default function Home() {
           {/* Input Section */}
           <section className="flex flex-col gap-6 p-6 sm:p-8 rounded-3xl bg-white/[0.02] border border-white/10 backdrop-blur-md shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            
+
             <div className="relative flex justify-between items-center">
               <h2 className="text-xl font-semibold flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-indigo-400" />
@@ -141,10 +144,10 @@ export default function Home() {
             )}
 
             {loading && (
-               <div className="flex flex-col items-center justify-center h-full text-zinc-500 gap-4">
-                 <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-                 <p className="animate-pulse">Abstracting concepts...</p>
-               </div>
+              <div className="flex flex-col items-center justify-center h-full text-zinc-500 gap-4">
+                <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                <p className="animate-pulse">Abstracting concepts...</p>
+              </div>
             )}
 
             {result && !loading && (
@@ -153,8 +156,8 @@ export default function Home() {
                 {result.audioUrl && (
                   <div className="bg-black/40 border border-white/10 p-5 rounded-2xl flex flex-col gap-4">
                     <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
-                       <Headphones className="w-4 h-4 text-blue-400" />
-                       Audio Synthesis
+                      <Headphones className="w-4 h-4 text-blue-400" />
+                      Audio Synthesis
                     </h3>
                     <audio controls className="w-full h-12 rounded-lg opacity-90 invert hue-rotate-180 sepia-0">
                       <source src={result.audioUrl} type="audio/mpeg" />
@@ -164,30 +167,30 @@ export default function Home() {
 
                 {/* Explanation */}
                 {result.simplifiedExplanation && (
-                   <div className="flex flex-col gap-3">
-                     <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
-                       <Sparkles className="w-4 h-4 text-emerald-400" />
-                       Simplified Translation
-                     </h3>
-                     <p className="text-zinc-200 leading-relaxed text-lg bg-white/5 p-5 rounded-2xl border border-white/5">
-                       {result.simplifiedExplanation}
-                     </p>
-                   </div>
+                  <div className="flex flex-col gap-3">
+                    <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-emerald-400" />
+                      Simplified Translation
+                    </h3>
+                    <p className="text-zinc-200 leading-relaxed text-lg bg-white/5 p-5 rounded-2xl border border-white/5">
+                      {result.simplifiedExplanation}
+                    </p>
+                  </div>
                 )}
 
                 {/* Flashcards */}
                 {result.flashcards && result.flashcards.length > 0 && (
-                   <div className="flex flex-col gap-4">
-                     <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
-                       <Code className="w-4 h-4 text-pink-400" />
-                       Active Recall Flashcards
-                     </h3>
-                     <div className="grid grid-cols-1 gap-4">
-                       {result.flashcards.map((fc: any, i: number) => (
-                         <Flashcard key={i} fc={fc} />
-                       ))}
-                     </div>
-                   </div>
+                  <div className="flex flex-col gap-4">
+                    <h3 className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                      <Code className="w-4 h-4 text-pink-400" />
+                      Active Recall Flashcards
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {result.flashcards.map((fc: any, i: number) => (
+                        <Flashcard key={i} fc={fc} />
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -202,21 +205,21 @@ function Flashcard({ fc }: { fc: any }) {
   const [flipped, setFlipped] = useState(false);
 
   return (
-    <div 
+    <div
       onClick={() => setFlipped(!flipped)}
       className="relative w-full min-h-[160px] cursor-pointer group perspective-1000"
     >
       <div className={`w-full h-full transition-all duration-500 transform-style-3d ${flipped ? "rotate-y-180" : ""}`}>
         {/* Front */}
         <div className={`absolute inset-0 w-full h-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl p-6 flex flex-col justify-center items-center text-center backface-hidden transition-colors`}>
-           <span className="text-xs uppercase tracking-widest text-indigo-400 mb-4 opacity-70">Question — Click to flip</span>
-           <p className="text-zinc-200 font-medium text-lg">{fc.q}</p>
+          <span className="text-xs uppercase tracking-widest text-indigo-400 mb-4 opacity-70">Question — Click to flip</span>
+          <p className="text-zinc-200 font-medium text-lg">{fc.q}</p>
         </div>
         {/* Back */}
         <div className={`absolute inset-0 w-full h-full bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-6 flex flex-col justify-center items-center text-center backface-hidden rotate-y-180`}>
-           <span className="text-xs uppercase tracking-widest text-indigo-300 mb-2 opacity-70">Answer</span>
-           <p className="text-white font-medium">{fc.a}</p>
-           {fc.hint && <p className="text-indigo-200/60 text-xs mt-3 mt-auto">Hint: {fc.hint}</p>}
+          <span className="text-xs uppercase tracking-widest text-indigo-300 mb-2 opacity-70">Answer</span>
+          <p className="text-white font-medium">{fc.a}</p>
+          {fc.hint && <p className="text-indigo-200/60 text-xs mt-3 mt-auto">Hint: {fc.hint}</p>}
         </div>
       </div>
     </div>
