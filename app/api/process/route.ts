@@ -5,26 +5,26 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
-const region = process.env.REGION || "us-east-1";
+const region = process.env.REGION || process.env.AWS_REGION || "us-east-1";
+const accessKeyId = process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "";
+const secretAccessKey = process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "";
+const bucketName = process.env.AUDIO_BUCKET_NAME || "eduvoice-audio-vilas-2026";
+const tableName = process.env.DYNAMODB_TABLE || "EduVoice_Sessions";
+const groqApiKey = process.env.GROQ_API_KEY || "";
 
-// AWS SDK Setup using credentials if provided
 const awsConfig = {
   region,
-  ...(process.env.ACCESS_KEY_ID && process.env.SECRET_ACCESS_KEY
-    ? {
-        credentials: {
-          accessKeyId: process.env.ACCESS_KEY_ID!,
-          secretAccessKey: process.env.SECRET_ACCESS_KEY!
-        }
-      }
-    : {})
+  credentials: {
+    accessKeyId,
+    secretAccessKey,
+  },
 };
 
 const pollyClient = new PollyClient(awsConfig);
 const s3Client = new S3Client(awsConfig);
 const ddbClient = new DynamoDBClient(awsConfig);
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "fallback_key" });
+const groq = new Groq({ apiKey: groqApiKey });
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +32,10 @@ export async function POST(req: Request) {
 
     if (!text || !targetLang) {
       return NextResponse.json({ error: "Missing text or targetLang" }, { status: 400 });
+    }
+
+    if (!groqApiKey || !accessKeyId || !secretAccessKey) {
+      return NextResponse.json({ error: "Server credentials or Groq API key are missing in environment variables." }, { status: 500 });
     }
 
     const prompt = `You are a helpful study assistant. Simplify the following technical text for a student.
@@ -49,10 +53,10 @@ Return a JSON object with strictly this structure:
   ]
 }`;
 
-    // 1. Groq Call
+    // 1. Groq Call using correct supported model
     const completion = await groq.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "openai/gpt-oss-20b",
+      model: "llama-3.1-8b-instant",
       temperature: 0.2,
       response_format: { type: "json_object" },
     });
@@ -62,15 +66,17 @@ Return a JSON object with strictly this structure:
 
     const processedData = JSON.parse(completionOutput);
 
-    // 2. Polly Call
+    // 2. Polly Call mapping
     let voiceId: VoiceId = VoiceId.Ruth;
     let langCode: LanguageCode = LanguageCode.en_US;
-    if (targetLang.toLowerCase() === "hindi") {
+    const langLower = targetLang.toLowerCase();
+    
+    if (langLower.includes("hindi") || langLower.includes("hi")) {
       voiceId = VoiceId.Kajal;
       langCode = LanguageCode.hi_IN;
-    } else if (targetLang.toLowerCase() === "spanish") {
+    } else if (langLower.includes("spanish") || langLower.includes("es")) {
       voiceId = VoiceId.Lucia;
-      langCode = LanguageCode.es_US;
+      langCode = LanguageCode.es_ES;
     }
 
     const pollyCommand = new SynthesizeSpeechCommand({
@@ -87,11 +93,10 @@ Return a JSON object with strictly this structure:
 
     const sessionId = `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const audioKey = `audio/${sessionId}.mp3`;
-    const bucketName = process.env.AUDIO_BUCKET_NAME || "eduvoice-audio";
 
     // 3. S3 Upload & Presigned URL
     if (audioStream) {
-      const chunks = [];
+      const chunks: Uint8Array[] = [];
       for await (const chunk of audioStream as any) {
         chunks.push(chunk);
       }
@@ -115,7 +120,6 @@ Return a JSON object with strictly this structure:
     }
 
     // 4. DynamoDB Insert
-    const tableName = process.env.DYNAMODB_TABLE || "EduVoice_Sessions";
     await ddbClient.send(
       new PutItemCommand({
         TableName: tableName,
@@ -124,8 +128,8 @@ Return a JSON object with strictly this structure:
           timestamp: { S: new Date().toISOString() },
           targetLang: { S: targetLang },
           audioKey: { S: audioKey },
-          status: { S: "SUCCESS" }
-        }
+          status: { S: "SUCCESS" },
+        },
       })
     );
 
@@ -137,7 +141,6 @@ Return a JSON object with strictly this structure:
 
   } catch (error: any) {
     console.error("Pipeline Error:", error);
-    // Return the actual error message to the UI for debugging
     return NextResponse.json(
       { 
         error: error.message || "Failed to process", 
