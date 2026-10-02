@@ -59,17 +59,42 @@ export async function POST(req: Request) {
       ]
     }`;
 
-    const modelName = process.env.GROQ_MODEL || "llama3-8b-8192";
+    const candidates = [
+      process.env.GROQ_MODEL,
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
+      "mixtral-8x7b-32768",
+      "gemma2-9b-it"
+    ].filter(Boolean) as string[];
 
-    const completion = await groq.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: modelName,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-    });
+    const modelsToTry = Array.from(new Set(candidates));
 
-    const completionOutput = completion.choices[0]?.message?.content;
-    if (!completionOutput) throw new Error("No response from Groq");
+    let completion: any = null;
+    let lastError: any = null;
+
+    for (const model of modelsToTry) {
+      try {
+        completion = await groq.chat.completions.create({
+          messages: [{ role: "user", content: prompt }],
+          model: model,
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+        });
+        if (completion?.choices?.[0]?.message?.content) {
+          console.log(`Successfully used Groq model: ${model}`);
+          break;
+        }
+      } catch (err: any) {
+        console.warn(`Groq model '${model}' failed:`, err?.message || err);
+        lastError = err;
+      }
+    }
+
+    if (!completion || !completion.choices?.[0]?.message?.content) {
+      throw lastError || new Error("All Groq models failed");
+    }
+
+    const completionOutput = completion.choices[0].message.content;
 
     const processedData = JSON.parse(completionOutput);
 
