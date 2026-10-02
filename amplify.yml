@@ -3,7 +3,9 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - echo "Cleaning npm cache"
+        - rm -rf .npm
+        - npm install
     build:
       commands:
         - echo "REGION=$REGION" >> .env
