@@ -59,9 +59,11 @@ export async function POST(req: Request) {
       ]
     }`;
 
+    const modelName = process.env.GROQ_MODEL || "llama3-8b-8192";
+
     const completion = await groq.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "llama-3.3-70b-versatile",
+      model: modelName,
       temperature: 0.2,
       response_format: { type: "json_object" },
     });
