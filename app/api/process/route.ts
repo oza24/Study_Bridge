@@ -14,18 +14,18 @@ export async function POST(req: Request) {
     const groqApiKey  = process.env.GROQ_API_KEY      || "";
 
     // Amplify strips env vars with "ACCESS_KEY" in the name at runtime.
-    // Workaround: store credentials as a JSON string in AWS_CREDS_JSON.
+    // Workaround: store credentials as a JSON string in STUDIO_CREDS_JSON.
     // Value to set in Amplify console: {"accessKeyId":"AKIA...","secretAccessKey":"..."}
     let explicitCreds: { accessKeyId: string; secretAccessKey: string } | undefined;
-    if (process.env.AWS_CREDS_JSON) {
+    if (process.env.STUDIO_CREDS_JSON) {
       try {
-        explicitCreds = JSON.parse(process.env.AWS_CREDS_JSON);
-        console.log("[CREDS] Loaded from AWS_CREDS_JSON, keyFirst4:", explicitCreds?.accessKeyId?.substring(0, 4));
+        explicitCreds = JSON.parse(process.env.STUDIO_CREDS_JSON);
+        console.log("[CREDS] Loaded from STUDIO_CREDS_JSON, keyFirst4:", explicitCreds?.accessKeyId?.substring(0, 4));
       } catch {
-        console.warn("[CREDS] Failed to parse AWS_CREDS_JSON");
+        console.warn("[CREDS] Failed to parse STUDIO_CREDS_JSON");
       }
     } else {
-      console.log("[CREDS] AWS_CREDS_JSON not set — using IAM role");
+      console.log("[CREDS] STUDIO_CREDS_JSON not set — using IAM role");
     }
 
     // Debug log — visible in Amplify → Monitoring → Hosting compute logs
