@@ -9,8 +9,8 @@ export async function POST(req: Request) {
   try {
     // ── Read env vars ─────────────────────────────────────────────────────────
     const region          = process.env.REGION || process.env.AWS_REGION || "us-east-1";
-    const accessKeyId     = process.env.ACCESS_KEY_ID     || process.env.AWS_ACCESS_KEY_ID     || "";
-    const secretAccessKey = process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "";
+    const accessKeyId     = process.env.APP_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "";
+    const secretAccessKey = process.env.APP_SECRET_ACCESS_KEY || process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "";
     const bucketName      = process.env.AUDIO_BUCKET_NAME || "eduvoice-audio-vilas-2026";
     const tableName       = process.env.DYNAMODB_TABLE    || "EduVoice_Sessions";
     const groqApiKey      = process.env.GROQ_API_KEY      || "";
