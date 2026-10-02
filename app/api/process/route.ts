@@ -18,9 +18,9 @@ export async function POST(req: Request) {
     // ── Debug log (visible in Amplify → Monitoring → Compute logs) ───────────
     console.log("[ENV DEBUG]", {
       region,
-      hasAccessKey:     accessKeyId.length > 0,
-      hasSecretKey:     secretAccessKey.length > 0,
-      hasGroqKey:       groqApiKey.length > 0,
+      accessKeyIdFirst4:     accessKeyId.substring(0, 4)     || "(empty)",
+      secretAccessKeyFirst4: secretAccessKey.substring(0, 4) || "(empty)",
+      groqKeyFirst4:         groqApiKey.substring(0, 4)       || "(empty)",
       bucketName,
       tableName,
     });
