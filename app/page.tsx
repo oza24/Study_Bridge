@@ -38,9 +38,11 @@ export default function Home() {
       if (res.ok) {
         setResult(data);
       } else {
-        alert(`Server Error: ${data.error} (${data.name})`);
+        const errorMsg = data.error || "An unexpected server error occurred.";
+        const errorDetails = data.name ? ` (${data.name})` : "";
+        alert(`Server Error: ${errorMsg}${errorDetails}`);
+        setError(errorMsg);
       }
-      setResult(data);
     } catch (err: any) {
       setError(err.message);
     } finally {

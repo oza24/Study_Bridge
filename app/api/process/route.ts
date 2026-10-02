@@ -8,20 +8,17 @@ import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 export async function POST(req: Request) {
   try {
     const region = process.env.REGION || process.env.AWS_REGION || "us-east-1";
-    const accessKeyId = process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "";
-    const secretAccessKey = process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "";
+    const accessKeyId = process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
     const bucketName = process.env.AUDIO_BUCKET_NAME || "eduvoice-audio-vilas-2026";
     const tableName = process.env.DYNAMODB_TABLE || "EduVoice_Sessions";
-    const groqApiKey = process.env.GROQ_API_KEY || "";
+    const groqApiKey = process.env.GROQ_API_KEY;
 
-    // Detailed check to see exactly which variable is failing if it happens again
-    if (!groqApiKey || !accessKeyId || !secretAccessKey) {
+    if (!groqApiKey) {
       return NextResponse.json(
         { 
-          error: "Missing credentials configuration", 
-          hasGroq: !!groqApiKey, 
-          hasAccessKey: !!accessKeyId, 
-          hasSecret: !!secretAccessKey 
+          error: "Missing GROQ_API_KEY. Please set GROQ_API_KEY in AWS Amplify Console under App Settings -> Environment Variables.",
+          name: "ConfigError" 
         },
         { status: 500 }
       );
@@ -30,16 +27,17 @@ export async function POST(req: Request) {
     const { text, targetLang } = await req.json();
 
     if (!text || !targetLang) {
-      return NextResponse.json({ error: "Missing text or targetLang" }, { status: 400 });
+      return NextResponse.json({ error: "Missing text or targetLang", name: "ValidationError" }, { status: 400 });
     }
 
-    const awsConfig = {
-      region,
-      credentials: {
+    // Build AWS Config. If explicit keys are provided, use them. Otherwise, let AWS SDK use the IAM Service Role / default credential chain.
+    const awsConfig: any = { region };
+    if (accessKeyId && secretAccessKey) {
+      awsConfig.credentials = {
         accessKeyId,
         secretAccessKey,
-      },
-    };
+      };
+    }
 
     const pollyClient = new PollyClient(awsConfig);
     const s3Client = new S3Client(awsConfig);
