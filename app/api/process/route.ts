@@ -30,13 +30,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing text or targetLang", name: "ValidationError" }, { status: 400 });
     }
 
-    // Build AWS Config. If explicit keys are provided, use them. Otherwise, let AWS SDK use the IAM Service Role / default credential chain.
-    const awsConfig: any = { region };
+        // Build AWS Config. Use explicit credentials from env vars if available (Amplify IAM role only has logging permissions).
+    const awsConfig: { region: string; credentials?: { accessKeyId: string; secretAccessKey: string } } = { region };
     if (accessKeyId && secretAccessKey) {
-      awsConfig.credentials = {
-        accessKeyId,
-        secretAccessKey,
-      };
+      awsConfig.credentials = { accessKeyId, secretAccessKey };
     }
 
     const pollyClient = new PollyClient(awsConfig);
