@@ -7,7 +7,6 @@ import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
 export async function POST(req: Request) {
   try {
-    // 1. Read environment variables DYNAMICALLY inside the handler (Fixes Amplify build-time scoping)
     const region = process.env.REGION || process.env.AWS_REGION || "us-east-1";
     const accessKeyId = process.env.ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "";
     const secretAccessKey = process.env.SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "";
@@ -15,9 +14,15 @@ export async function POST(req: Request) {
     const tableName = process.env.DYNAMODB_TABLE || "EduVoice_Sessions";
     const groqApiKey = process.env.GROQ_API_KEY || "";
 
+    // Detailed check to see exactly which variable is failing if it happens again
     if (!groqApiKey || !accessKeyId || !secretAccessKey) {
       return NextResponse.json(
-        { error: "Server credentials or Groq API key are missing in environment variables." },
+        { 
+          error: "Missing credentials configuration", 
+          hasGroq: !!groqApiKey, 
+          hasAccessKey: !!accessKeyId, 
+          hasSecret: !!secretAccessKey 
+        },
         { status: 500 }
       );
     }
@@ -28,7 +33,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing text or targetLang" }, { status: 400 });
     }
 
-    // Initialize clients dynamically with the runtime variables
     const awsConfig = {
       region,
       credentials: {
@@ -57,7 +61,6 @@ export async function POST(req: Request) {
       ]
     }`;
 
-    // 2. Groq Call using correct supported model
     const completion = await groq.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       model: "llama-3.1-8b-instant",
@@ -70,7 +73,6 @@ export async function POST(req: Request) {
 
     const processedData = JSON.parse(completionOutput);
 
-    // 3. Polly Call mapping
     let voiceId: VoiceId = VoiceId.Ruth;
     let langCode: LanguageCode = LanguageCode.en_US;
     const langLower = targetLang.toLowerCase();
@@ -98,7 +100,6 @@ export async function POST(req: Request) {
     const sessionId = `req-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const audioKey = `audio/${sessionId}.mp3`;
 
-    // 4. S3 Upload & Presigned URL
     if (audioStream) {
       const chunks: Uint8Array[] = [];
       for await (const chunk of audioStream as any) {
@@ -123,7 +124,6 @@ export async function POST(req: Request) {
       audioUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
     }
 
-    // 5. DynamoDB Insert
     await ddbClient.send(
       new PutItemCommand({
         TableName: tableName,

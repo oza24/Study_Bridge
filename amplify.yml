@@ -3,14 +3,18 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "Cleaning npm cache"
-        - rm -rf .npm
-        - npm install
+        - npm ci
     build:
       commands:
-        - echo "AWS_REGION=$REGION" >> .env.production
-        - echo "AWS_ACCESS_KEY_ID=$ACCESS_KEY_ID" >> .env.production
-        - echo "AWS_SECRET_ACCESS_KEY=$SECRET_ACCESS_KEY" >> .env.production
+        - echo "REGION=$REGION" >> .env
+        - echo "ACCESS_KEY_ID=$ACCESS_KEY_ID" >> .env
+        - echo "SECRET_ACCESS_KEY=$SECRET_ACCESS_KEY" >> .env
+        - echo "AUDIO_BUCKET_NAME=$AUDIO_BUCKET_NAME" >> .env
+        - echo "DYNAMODB_TABLE=$DYNAMODB_TABLE" >> .env
+        - echo "GROQ_API_KEY=$GROQ_API_KEY" >> .env
+        - echo "REGION=$REGION" >> .env.production
+        - echo "ACCESS_KEY_ID=$ACCESS_KEY_ID" >> .env.production
+        - echo "SECRET_ACCESS_KEY=$SECRET_ACCESS_KEY" >> .env.production
         - echo "AUDIO_BUCKET_NAME=$AUDIO_BUCKET_NAME" >> .env.production
         - echo "DYNAMODB_TABLE=$DYNAMODB_TABLE" >> .env.production
         - echo "GROQ_API_KEY=$GROQ_API_KEY" >> .env.production
